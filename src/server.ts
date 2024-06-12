@@ -2,8 +2,9 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import morgan from "morgan";
-import { testDbConnection } from "./utils/db";
 import authRoutes from "./routes/authRoutes";
+import { testDbConnection } from "./utils/db";
+import { corsConfig } from "./config/cors";
 
 dotenv.config();
 
@@ -22,6 +23,6 @@ testDbConnection();
 app.use("/api/auth", authRoutes);
 
 // CORS
-/** TODO: CORS of app */
+app.use(cors(corsConfig[process.env.ENV]));
 
 export default app;
