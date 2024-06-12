@@ -1,0 +1,5 @@
+@hostname=localhost
+@port=4000
+
+
+POST http://{{hostname}}:{{port}}/api/auth/test
