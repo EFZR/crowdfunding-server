@@ -1,5 +1,28 @@
 @hostname=localhost
 @port=4000
 
+POST http://{{hostname}}:{{port}}/api/auth/create-account
+Content-Type: application/json
 
-POST http://{{hostname}}:{{port}}/api/auth/test
+{
+  "username": "emerson",
+  "email": "emerson.zapatarivas@gmail.com",
+  "password": "password",
+  "password_confirmation": "password"
+}
+
+###
+
+POST http://{{hostname}}:{{port}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "emerson",
+  "email": "emerson.zapatarivas@gmail.com",
+  "password": "password"
+}
+
+###
+
+POST http://{{hostname}}:{{port}}/api/auth/logoff
+

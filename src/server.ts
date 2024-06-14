@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import morgan from "morgan";
 import authRoutes from "./routes/authRoutes";
-import { testDbConnection } from "./utils/db";
+import { connectDb } from "./config/db";
 import { corsConfig } from "./config/cors";
 
 dotenv.config();
@@ -11,13 +11,14 @@ dotenv.config();
 const app = express();
 
 // Logging.
-app.use(morgan("common"));
+app.use(morgan("dev"));
 
 // Json lecture data.
 app.use(express.json());
 
+/** TODO: Init database with a .sql file */
 // Database.
-testDbConnection();
+connectDb();
 
 // Routes
 app.use("/api/auth", authRoutes);

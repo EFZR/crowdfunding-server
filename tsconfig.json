@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "outDir": "./dist/",
-    // "rootDir": "./src/",
+    "rootDir": "./src/",
     "lib": ["esnext", "DOM"],
     "target": "ESNext",
     "moduleResolution": "NodeNext",
@@ -12,16 +12,6 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "baseUrl": "./src",
-    "paths": {
-      "@/config/*": ["config/*"],
-      "@/controllers/*": ["controllers/*"],
-      "@/middleware/*": ["middleware/*"],
-      "@/models/*": ["models/*"],
-      "@/routes/*": ["routes/*"],
-      "@/types/*": ["types/*"],
-      "@/utils/*": ["utils/*"],
-      "@/dbConfig": ["../knexfile.ts"]
-    }
   },
 
   /* Bundler mode */
@@ -37,6 +27,6 @@
   "noUnusedParameters": true,
   "noFallthroughCasesInSwitch": true,
 
-  "include": ["src/**/*.ts", "./knexfile.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts"]
 }

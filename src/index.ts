@@ -1,10 +1,10 @@
 import server from "./server";
-import { success } from "./utils/logging";
+import { logger } from "./utils/logging";
 
 /** Better the paths */
 
 const PORT = process.env.PORT || 4000;
 
 server.listen(PORT, () => {
-  success(`REST API funcionando en el puerto ${PORT}`);
+  logger.success(`REST API funcionando en el puerto ${PORT}`);
 });
