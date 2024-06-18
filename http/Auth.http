@@ -24,5 +24,4 @@ Content-Type: application/json
 
 ###
 
-POST http://{{hostname}}:{{port}}/api/auth/logoff
-
+GET http://{{hostname}}:{{port}}/api/auth/google/authentication
