@@ -2,8 +2,6 @@ import { Sequelize } from "sequelize-typescript";
 import dotenv from "dotenv";
 import { logger } from "../utils/logging";
 
-/** TODO: Error handling */
-
 dotenv.config();
 
 const db = new Sequelize(process.env.DATABASE_URL, {

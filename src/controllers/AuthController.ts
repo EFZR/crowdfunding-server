@@ -4,7 +4,12 @@ import axios from "axios";
 
 // Project dependencies.
 import { checkPassword, hashPassword } from "../utils/hash";
-import { BadRequestError, NotFoundError, UnauthorizedError } from "../utils/CustomError";
+import {
+  BadRequestError,
+  NotFoundError,
+  UnauthorizedError,
+} from "../utils/CustomError";
+import { generateJWT } from "../utils/jwt";
 import { logger } from "../utils/logging";
 import User from "../models/User.model";
 
@@ -22,7 +27,10 @@ export class AuthController {
     const userExists = await User.findOne({ where: { email } });
 
     if (userExists) {
-      throw new BadRequestError({message: "El usuario ya esta registrado.", logging: true});
+      throw new BadRequestError({
+        message: "El usuario ya esta registrado.",
+        logging: true,
+      });
     }
 
     // Hash Password
@@ -39,23 +47,42 @@ export class AuthController {
     res.send("Usuario creado correctamente.");
   }
 
-  // TODO: JWT Implementation
   static async login(req: Request, res: Response) {
     const { email, password } = req.body;
 
     // Search User.
     const user = await User.findOne({ where: { email } });
+
+    // Check if user exists.
     if (!user) {
-      throw new NotFoundError({message: "Usuario no encontrado.", logging: true});
+      throw new NotFoundError({
+        message: "Usuario no encontrado.",
+        logging: true,
+      });
+    }
+
+    // Check if user has a password.
+    if (!user.password) {
+      res.send(
+        "Contraseña no definida. Revisa tu email para crear una contraseña."
+      );
     }
 
     // Check Hashed password
-    const isPasswordValid = checkPassword(password, user.password);
+    const isPasswordValid = await checkPassword(password, user.password);
+
+    // Generate JWT
+    const token = generateJWT({ id: user.id, email: user.email });
+
     if (!isPasswordValid) {
-      throw new UnauthorizedError({message: "Usuario no encontrado.", logging: true});
+      throw new UnauthorizedError({
+        message: "Contraseña Incorrecta.",
+        logging: true,
+      });
     }
 
-    return res.send("Autenticando...");
+    res.cookie("token", token, { httpOnly: true });
+    res.send(token);
   }
 
   static async googleAuthentication(req: Request, res: Response) {
@@ -68,11 +95,15 @@ export class AuthController {
       state: process.env.STATE,
     });
     const uri = `${process.env.AUTH_URI}?${params.toString()}`;
+
     res.redirect(uri);
   }
 
   static async googleCallback(req: Request, res: Response) {
     const code = req.query.code;
+
+    // TODO: Check for any token if exists and validate to use it.
+    // if not request for a new token.
     const { data } = await axios.post(process.env.TOKEN_URI, {
       code,
       client_id: process.env.CLIENT_ID,
@@ -90,7 +121,7 @@ export class AuthController {
 
     // Checking in database if user exists.
     const { email, given_name } = userInfo;
-    const user = User.findOne({
+    let user = await User.findOne({
       where: {
         email,
       },
@@ -98,14 +129,29 @@ export class AuthController {
 
     // Saving in database.
     if (!user) {
-      logger.success("user is saving.");
-      await User.create({
+      logger.success("User saved.");
+      user = await User.create({
         email,
         username: given_name,
       });
     }
 
+    const token = generateJWT({ id: user.id, email: user.email });
+
     // TODO: Redirect to client Page & send JWT.
-    // res.send();
+    res.cookie("token", token, { httpOnly: true });
+    res.send(token);
   }
+
+  // TODO: Implement more oauth 2.0 options like meta and apple id.
+
+  /** TODO:
+   * Implement confirmAccount,
+   * requestConfirmationCode,
+   * forgotPassword,
+   * validatePasswordToken,
+   * updatePasswordWithToken,
+   * updateProfile,
+   * updateCurrentUserWithPassword,
+   * checkPassword */
 }
