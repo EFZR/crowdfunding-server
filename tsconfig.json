@@ -2,7 +2,7 @@
   "compilerOptions": {
     "outDir": "./dist/",
     "rootDir": "./src/",
-    "lib": ["esnext", "DOM"],
+    "lib": ["esnext"],
     "target": "ESNext",
     "moduleResolution": "NodeNext",
     "module": "NodeNext",
@@ -10,16 +10,8 @@
     "esModuleInterop": true,
     "declaration": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "baseUrl": "./src",
+    "emitDecoratorMetadata": true
   },
-
-  /* Bundler mode */
-  "moduleResolution": "bundler",
-  "allowImportingTsExtensions": true,
-  "resolveJsonModule": true,
-  "isolatedModules": true,
-  "noEmit": true,
 
   /* Linting */
   "strict": true,

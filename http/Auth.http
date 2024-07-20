@@ -5,8 +5,8 @@ POST http://{{hostname}}:{{port}}/api/auth/create-account
 Content-Type: application/json
 
 {
-  "username": "emerson",
-  "email": "emerson.zapatarivas@gmail.com",
+  "username": "emerson rivera",
+  "email": "emerson.rivera@gmail.com",
   "password": "password",
   "password_confirmation": "password"
 }
@@ -17,7 +17,7 @@ POST http://{{hostname}}:{{port}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "emerson.zapatarivas@gmail.com",
+  "email": "suamy.zapatarivas@gmail.com",
   "password": "password"
 }
 

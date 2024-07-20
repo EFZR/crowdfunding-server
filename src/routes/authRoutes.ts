@@ -39,4 +39,6 @@ router.get("/google/authentication", AuthController.googleAuthentication);
 
 router.get("/google/callback", AuthController.googleCallback);
 
+// Facebook
+
 export default router;

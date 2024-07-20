@@ -3,21 +3,15 @@ import { Request, Response } from "express";
 import axios from "axios";
 
 // Project dependencies.
-import { checkPassword, hashPassword } from "../utils/hash";
 import {
   BadRequestError,
   NotFoundError,
   UnauthorizedError,
 } from "../utils/CustomError";
+import { checkPassword, hashPassword } from "../utils/hash";
 import { generateJWT } from "../utils/jwt";
 import { logger } from "../utils/logging";
 import User from "../models/User.model";
-
-type UserForCreate = {
-  email: string;
-  username: string;
-  password: string;
-};
 
 export class AuthController {
   static async createAccount(req: Request, res: Response) {
@@ -37,14 +31,12 @@ export class AuthController {
     const enc_password = await hashPassword(password);
 
     // Creation.
-    const user_fc: UserForCreate = {
+    await User.create({
       email,
       username,
       password: enc_password,
-    };
-
-    await User.create(user_fc);
-    res.send("Usuario creado correctamente.");
+    });
+    res.json({ success: "Usuario creado correctamente." });
   }
 
   static async login(req: Request, res: Response) {
@@ -82,19 +74,19 @@ export class AuthController {
     }
 
     res.cookie("token", token, { httpOnly: true });
-    res.send(token);
+    res.json({ token: token });
   }
 
   static async googleAuthentication(req: Request, res: Response) {
     const params = new URLSearchParams({
-      client_id: process.env.CLIENT_ID,
-      redirect_uri: process.env.REDIRECT_URI,
-      response_type: process.env.RESPONSE_TYPE,
-      scope: process.env.SCOPE,
-      include_granted_scopes: process.env.INCLUDE_GRANTED_SCOPES,
-      state: process.env.STATE,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+      response_type: process.env.GOOGLE_RESPONSE_TYPE,
+      scope: process.env.GOOGLE_SCOPE,
+      include_granted_scopes: process.env.GOOGLE_INCLUDE_GRANTED_SCOPES,
+      state: process.env.GOOGLE_STATE,
     });
-    const uri = `${process.env.AUTH_URI}?${params.toString()}`;
+    const uri = `${process.env.GOOGLE_AUTH_URI}?${params.toString()}`;
 
     res.redirect(uri);
   }
@@ -104,20 +96,23 @@ export class AuthController {
 
     // TODO: Check for any token if exists and validate to use it.
     // if not request for a new token.
-    const { data } = await axios.post(process.env.TOKEN_URI, {
+    const { data } = await axios.post(process.env.GOOGLE_TOKEN_URI, {
       code,
-      client_id: process.env.CLIENT_ID,
-      client_secret: process.env.CLIENT_SECRET,
-      redirect_uri: process.env.REDIRECT_URI,
-      grant_type: process.env.GRANT_TYPE,
+      GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+      GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+      GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI,
+      grant_type: process.env.GOOGLE_GRANT_TYPE,
     });
 
     const { access_token } = data;
-    const { data: userInfo } = await axios.get(process.env.USER_INFO_URI, {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-    });
+    const { data: userInfo } = await axios.get(
+      process.env.GOOGLE_USER_INFO_URI,
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      }
+    );
 
     // Checking in database if user exists.
     const { email, given_name } = userInfo;
@@ -140,13 +135,13 @@ export class AuthController {
 
     // TODO: Redirect to client Page & send JWT.
     res.cookie("token", token, { httpOnly: true });
-    res.send(token);
+    res.json({ token: token });
   }
 
   // TODO: Implement more oauth 2.0 options like meta and apple id.
 
   /** TODO:
-   * Implement confirmAccount,
+   * confirmAccount,
    * requestConfirmationCode,
    * forgotPassword,
    * validatePasswordToken,
