@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
+
 import jwt from "jsonwebtoken";
 import User from "../models/User.model";
+import { UnauthorizedError } from "../utils/CustomError";
 
 declare global {
   namespace Express {
@@ -17,10 +19,12 @@ export async function authenticate(
   next: NextFunction
 ) {
   // Get Bearer Token from req.
-  const bearer = req.cookies["token"];
+  const bearer = req.headers.authorization;
   if (!bearer) {
-    const error = new Error("No autorizado.");
-    return res.status(401).json({ error: error.message });
+    throw new UnauthorizedError({
+      message: "Acceso no autorizado.",
+      logging: true,
+    });
   }
   const [_, token] = bearer.split(" ");
 
@@ -33,12 +37,16 @@ export async function authenticate(
         req.user = user;
         next();
       } else {
-        const err = new Error("Token no Valido.");
-        next(err);
+        throw new UnauthorizedError({
+          message: "Token no Valido.",
+          logging: true,
+        });
       }
     }
   } catch (error) {
-    const err = new Error("Token no Válido");
-    next(err);
+    throw new UnauthorizedError({
+      message: "Token no Valido.",
+      logging: true,
+    });
   }
 }

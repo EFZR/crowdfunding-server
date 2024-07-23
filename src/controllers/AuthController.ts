@@ -5,6 +5,7 @@ import axios from "axios";
 // Project dependencies.
 import {
   BadRequestError,
+  ForbiddenError,
   NotFoundError,
   UnauthorizedError,
 } from "../utils/CustomError";
@@ -156,6 +157,127 @@ export class AuthController {
     res.json({ token: token });
   }
 
+  static async requestConfirmationCode(req: Request, res: Response) {
+    const { email } = req.body;
+
+    // Validate if the user exists
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      throw new NotFoundError({
+        message: "El usuario no esta registrado.",
+        logging: true,
+      });
+    }
+
+    // Prevent token from confirmed users
+    if (user.confirmed) {
+      throw new ForbiddenError({
+        message: "El usuario ya esta confirmado.",
+        logging: true,
+      });
+    }
+
+    // Generate and save the token
+    const tokenPayload = {
+      token: generateToken(),
+      userId: user.id,
+    };
+
+    const token = await Token.create(tokenPayload);
+
+    // Send Email.
+    AuthEmail.sendConfirmationEmail({
+      email: user.email,
+      name: user.username,
+      token: token.token,
+    });
+
+    res.json({ success: "Se envió un nuevo token a tu E-mail." });
+  }
+
+  static async forgotPassword(req: Request, res: Response) {
+    const { email } = req.body;
+
+    // Validate if the user exists
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      throw new NotFoundError({
+        message: "El usuario no esta registrado.",
+        logging: true,
+      });
+    }
+
+    // Generate and save the token
+    const tokenPayload = {
+      token: generateToken(),
+      userId: user.id,
+    };
+
+    const token = await Token.create(tokenPayload);
+
+    // Send Email.
+    AuthEmail.sendPasswordResetToken({
+      email: user.email,
+      name: user.username,
+      token: token.token,
+    });
+
+    res.json({ success: "Revisa tu E-Mail para instrucciones." });
+  }
+
+  static async validatePasswordToken(req: Request, res: Response) {
+    const { token } = req.body;
+    const tokenExists = await Token.findOne({ where: { token } });
+
+    // Validate if token exists.
+    if (!tokenExists) {
+      throw new NotFoundError({
+        message: "Token no Valido",
+        logging: true,
+      });
+    }
+
+    res.json({ success: "Token valido, define tu nueva contraseña" });
+  }
+
+  static async updatePasswordWithToken(req: Request, res: Response) {
+    const { token } = req.params;
+    const { password } = req.body;
+    const tokenExists = await Token.findOne({ where: { token } });
+
+    // Validate if token exists.
+    if (!tokenExists) {
+      throw new NotFoundError({
+        message: "Token no Valido",
+        logging: true,
+      });
+    }
+
+    // Hash the password before saving to the database
+    const hashedPassword = await hashPassword(password);
+
+    // Update confirmed user and delete used token.
+    await Promise.allSettled([
+      User.update(
+        { password: hashedPassword },
+        {
+          where: {
+            id: tokenExists.userId,
+          },
+        }
+      ),
+      Token.destroy({
+        where: { token },
+      }),
+    ]);
+
+    res.json({ success: "El password se modificó correctamente." });
+  }
+
+  static async user(req: Request, res: Response) {
+    res.json(req.user);
+  }
+
   static async googleAuthentication(req: Request, res: Response) {
     const params = new URLSearchParams({
       client_id: process.env.GOOGLE_CLIENT_ID,
@@ -218,17 +340,13 @@ export class AuthController {
 
   // TODO: Implement more oauth 2.0 options like meta and apple id.
 
-  static async requestConfirmationCode(req: Request, res: Response) {}
-
-  static async forgotPassword(req: Request, res: Response) {}
-
-  static async validatePasswordToken(req: Request, res: Response) {}
-
-  static async updatePasswordWithToken(req: Request, res: Response) {}
-
-  static async updateProfile(req: Request, res: Response) {}
-
-  static async updateCurrentUserWithPassword(req: Request, res: Response) {}
-
-  static async checkPassword(req: Request, res: Response) {}
+  /**
+   * TODO: Implement when needed
+   *
+   * static async updateProfile(req: Request, res: Response) {}
+   *
+   * static async updateCurrentUserWithPassword(req: Request, res: Response) {}
+   *
+   * static async checkPassword(req: Request, res: Response) {}
+   */
 }

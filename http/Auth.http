@@ -1,6 +1,7 @@
 @HOSTNAME=localhost
 @PORT=4000
-@CONFIRMATION_TOKEN=889065
+@CONFIRMATION_TOKEN=678698
+@ACCESS_JWT=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywiZW1haWwiOiJqb2huLmRvZUBnbWFpbC5jb20iLCJpYXQiOjE3MjE3MTQ3OTMsImV4cCI6MTczNzI2Njc5M30.a4o3w8m5WunrMKMOlEY-tejjOLnBlNutnsHh1bHyYv8
 
 POST http://{{HOSTNAME}}:{{PORT}}/api/auth/create-account
 Content-Type: application/json
@@ -28,8 +29,50 @@ Content-Type: application/json
 
 {
   "email": "john.doe@gmail.com",
-  "password": "password"
+  "password": "Password123"
 }
+
+###
+
+POST http://{{HOSTNAME}}:{{PORT}}/api/auth/request-code
+Content-Type: application/json
+
+{
+  "email": "john.doe@gmail.com"
+}
+
+###
+
+POST http://{{HOSTNAME}}:{{PORT}}/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "john.doe@gmail.com"
+}
+
+###
+
+POST http://{{HOSTNAME}}:{{PORT}}/api/auth/validate-password-token
+Content-Type: application/json
+
+{
+  "token": "{{CONFIRMATION_TOKEN}}"
+}
+
+###
+
+POST http://{{HOSTNAME}}:{{PORT}}/api/auth/update-password/{{CONFIRMATION_TOKEN}}
+Content-Type: application/json
+
+{
+  "password": "Password123",
+  "password_confirmation": "Password123"
+}
+
+###
+
+GET http://{{HOSTNAME}}:{{PORT}}/api/auth/user
+Authorization: Bearer {{ACCESS_JWT}}
 
 ###
 
