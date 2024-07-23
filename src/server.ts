@@ -22,9 +22,6 @@ app.use(morgan("dev"));
 // Json lecture data.
 app.use(express.json());
 
-// Cookies utilities.
-app.use(cookieParser());
-
 /** TODO: Init database with a .sql file */
 // Database.
 connectDb();

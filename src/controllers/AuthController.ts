@@ -11,32 +11,96 @@ import {
 import { checkPassword, hashPassword } from "../utils/hash";
 import { generateJWT } from "../utils/jwt";
 import { logger } from "../utils/logging";
+import { generateToken } from "../utils/token";
+import { AuthEmail } from "../emails/AuthEmail";
 import User from "../models/User.model";
+import Token from "../models/Token.model";
 
 export class AuthController {
   static async createAccount(req: Request, res: Response) {
     const { email, username, password } = req.body;
 
-    // Validation.
+    // Validate if the user already exists
     const userExists = await User.findOne({ where: { email } });
-
     if (userExists) {
       throw new BadRequestError({
-        message: "El usuario ya esta registrado.",
+        message: "El usuario ya está registrado.",
         logging: true,
       });
     }
 
-    // Hash Password
-    const enc_password = await hashPassword(password);
+    // Hash the password before saving to the database
+    const hashedPassword = await hashPassword(password);
 
-    // Creation.
-    await User.create({
+    // Prepare the user payload
+    const userPayload = {
       email,
       username,
-      password: enc_password,
+      password: hashedPassword,
+    };
+
+    // Create the user in the database
+    const newUser = await User.create(userPayload);
+
+    // Generate and save the token
+    const tokenPayload = {
+      token: generateToken(),
+      userId: newUser.id,
+    };
+
+    const token = await Token.create(tokenPayload);
+
+    // Send Email.
+    AuthEmail.sendConfirmationEmail({
+      email: newUser.email,
+      name: newUser.username,
+      token: token.token,
     });
-    res.json({ success: "Usuario creado correctamente." });
+
+    // Respond with a success message
+    res.json({ success: "Cuenta creada, revisa tu email para confirmarla." });
+  }
+
+  static async confirmAccount(req: Request, res: Response) {
+    const { token } = req.body;
+    const tokenExists = await Token.findOne({ where: { token } });
+
+    // Validate if token exists.
+    if (!tokenExists) {
+      throw new NotFoundError({
+        message: "Token no Valido",
+        logging: true,
+      });
+    }
+
+    // Check if token still valid.
+    const currentDate = new Date();
+    if (currentDate > tokenExists.expiresAt) {
+      throw new UnauthorizedError({
+        message: "Token Expirado, consulta por uno nuevo.",
+        logging: true,
+      });
+    }
+
+    // Update confirmed user and delete used token.
+    await Promise.allSettled([
+      User.update(
+        { confirmed: true },
+        {
+          where: {
+            id: tokenExists.userId,
+          },
+        }
+      ),
+      Token.destroy({
+        where: { token },
+      }),
+    ]);
+
+    // Respond with a success message
+    res.json({
+      success: "Cuenta confirmada correctamente.",
+    });
   }
 
   static async login(req: Request, res: Response) {
@@ -53,11 +117,27 @@ export class AuthController {
       });
     }
 
-    // Check if user has a password.
-    if (!user.password) {
-      res.send(
-        "Contraseña no definida. Revisa tu email para crear una contraseña."
-      );
+    // Check if user is confirmed.
+    if (!user.confirmed) {
+      // Generate and save the token
+      const tokenPayload = {
+        token: generateToken(),
+        userId: user.id,
+      };
+      const token = await Token.create(tokenPayload);
+
+      // Send Email.
+      AuthEmail.sendConfirmationEmail({
+        email: user.email,
+        name: user.username,
+        token: token.token,
+      });
+
+      throw new UnauthorizedError({
+        message:
+          "La cuenta no ha sido confirmada, hemos enviado un email de confirmacion.",
+        logging: true,
+      });
     }
 
     // Check Hashed password
@@ -73,7 +153,6 @@ export class AuthController {
       });
     }
 
-    res.cookie("token", token, { httpOnly: true });
     res.json({ token: token });
   }
 
@@ -134,19 +213,22 @@ export class AuthController {
     const token = generateJWT({ id: user.id, email: user.email });
 
     // TODO: Redirect to client Page & send JWT.
-    res.cookie("token", token, { httpOnly: true });
     res.json({ token: token });
   }
 
   // TODO: Implement more oauth 2.0 options like meta and apple id.
 
-  /** TODO:
-   * confirmAccount,
-   * requestConfirmationCode,
-   * forgotPassword,
-   * validatePasswordToken,
-   * updatePasswordWithToken,
-   * updateProfile,
-   * updateCurrentUserWithPassword,
-   * checkPassword */
+  static async requestConfirmationCode(req: Request, res: Response) {}
+
+  static async forgotPassword(req: Request, res: Response) {}
+
+  static async validatePasswordToken(req: Request, res: Response) {}
+
+  static async updatePasswordWithToken(req: Request, res: Response) {}
+
+  static async updateProfile(req: Request, res: Response) {}
+
+  static async updateCurrentUserWithPassword(req: Request, res: Response) {}
+
+  static async checkPassword(req: Request, res: Response) {}
 }

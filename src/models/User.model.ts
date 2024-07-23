@@ -1,9 +1,5 @@
-import {
-  Table,
-  Column,
-  Model,
-  DataType,
-} from "sequelize-typescript";
+import { Table, Column, Model, DataType, HasMany } from "sequelize-typescript";
+import Token from "./Token.model";
 
 @Table({
   tableName: "Users",
@@ -27,6 +23,15 @@ class User extends Model {
     type: DataType.STRING,
   })
   public declare password: string;
+
+  @Column({
+    type: DataType.BOOLEAN,
+    defaultValue: false,
+  })
+  public declare confirmed: boolean;
+
+  @HasMany(() => Token)
+  token: Token[];
 }
 
 export default User;

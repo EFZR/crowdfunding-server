@@ -1,26 +1,36 @@
-@hostname=localhost
-@port=4000
+@HOSTNAME=localhost
+@PORT=4000
+@CONFIRMATION_TOKEN=889065
 
-POST http://{{hostname}}:{{port}}/api/auth/create-account
+POST http://{{HOSTNAME}}:{{PORT}}/api/auth/create-account
 Content-Type: application/json
 
 {
-  "username": "emerson rivera",
-  "email": "emerson.rivera@gmail.com",
+  "username": "john doe",
+  "email": "john.doe@gmail.com",
   "password": "password",
   "password_confirmation": "password"
 }
 
 ###
 
-POST http://{{hostname}}:{{port}}/api/auth/login
+POST http://{{HOSTNAME}}:{{PORT}}/api/auth/confirm-account
 Content-Type: application/json
 
 {
-  "email": "suamy.zapatarivas@gmail.com",
+  "token": "{{CONFIRMATION_TOKEN}}"
+}
+
+###
+
+POST http://{{HOSTNAME}}:{{PORT}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@gmail.com",
   "password": "password"
 }
 
 ###
 
-GET http://{{hostname}}:{{port}}/api/auth/google/authentication
+GET http://{{HOSTNAME}}:{{PORT}}/api/auth/google/authentication

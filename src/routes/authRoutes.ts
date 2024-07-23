@@ -24,6 +24,13 @@ router.post(
 );
 
 router.post(
+  "/confirm-account",
+  body("token").notEmpty().withMessage("El Token no puede ir vacio."),
+  handleInputErrors,
+  AuthController.confirmAccount
+);
+
+router.post(
   "/login",
   body("password").notEmpty().withMessage("El Password no puede ir vacio."),
   body("email").isEmail().withMessage("E-mail no valido."),
