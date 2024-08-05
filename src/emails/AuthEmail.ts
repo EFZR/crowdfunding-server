@@ -30,7 +30,7 @@ export class AuthEmail {
       text: "CrowdFunding - Confirma tu cuenta.",
       html: `<p>Hola: ${user.name}, has solicitado restablecer tu password.</p>
             <p>Visita el siguiente enlace</p>
-            <a href="${process.env.FRONTEND_URL}/authentication/newpassword">Restablecer Password</a>
+            <a href="${process.env.FRONTEND_URL}/authentication/newPassword">Restablecer Password</a>
             <p>E ingresa el codigo: <b>${user.token}</b></p>
             <p>Este token expira en 10 minutos</p>`,
     });

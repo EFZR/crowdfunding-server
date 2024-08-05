@@ -61,7 +61,7 @@ router.post(
   AuthController.validatePasswordToken
 );
 
-router.post(
+router.put(
   "/update-password/:token",
   param("token").isNumeric().withMessage("Token no valido."),
   body("password")
