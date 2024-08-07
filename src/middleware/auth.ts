@@ -12,7 +12,6 @@ declare global {
   }
 }
 
-// TODO: Better handle errors.
 export async function authenticate(
   req: Request,
   res: Response,

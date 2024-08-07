@@ -286,6 +286,7 @@ export class AuthController {
       scope: process.env.GOOGLE_SCOPE,
       include_granted_scopes: process.env.GOOGLE_INCLUDE_GRANTED_SCOPES,
       state: process.env.GOOGLE_STATE,
+      access_type: process.env.GOOGLE_ACCESS_TYPE
     });
     const uri = `${process.env.GOOGLE_AUTH_URI}?${params.toString()}`;
 
@@ -299,9 +300,9 @@ export class AuthController {
     // if not request for a new token.
     const { data } = await axios.post(process.env.GOOGLE_TOKEN_URI, {
       code,
-      GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
-      GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-      GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      redirect_uri: process.env.GOOGLE_REDIRECT_URI,
       grant_type: process.env.GOOGLE_GRANT_TYPE,
     });
 
@@ -333,8 +334,6 @@ export class AuthController {
     }
 
     const token = generateJWT({ id: user.id, email: user.email });
-
-    // TODO: Redirect to client Page & send JWT.
     res.json({ token: token });
   }
 
