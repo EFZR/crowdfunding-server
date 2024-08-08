@@ -286,7 +286,7 @@ export class AuthController {
       scope: process.env.GOOGLE_SCOPE,
       include_granted_scopes: process.env.GOOGLE_INCLUDE_GRANTED_SCOPES,
       state: process.env.GOOGLE_STATE,
-      access_type: process.env.GOOGLE_ACCESS_TYPE
+      access_type: process.env.GOOGLE_ACCESS_TYPE,
     });
     const uri = `${process.env.GOOGLE_AUTH_URI}?${params.toString()}`;
 
@@ -305,6 +305,8 @@ export class AuthController {
       redirect_uri: process.env.GOOGLE_REDIRECT_URI,
       grant_type: process.env.GOOGLE_GRANT_TYPE,
     });
+
+    console.log(data);
 
     const { access_token } = data;
     const { data: userInfo } = await axios.get(

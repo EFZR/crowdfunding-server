@@ -1,23 +1,35 @@
 import {
   Table,
   Column,
+  PrimaryKey,
+  Default,
   Model,
   DataType,
   ForeignKey,
-  BelongsTo,
+  Unique,
   BeforeCreate,
+  BelongsTo,
 } from "sequelize-typescript";
 import User from "./User.model";
 
 @Table({
-  tableName: "Token",
+  tableName: "Session",
 })
-class Token extends Model {
+class Session extends Model {
+  @PrimaryKey
+  @Default(DataType.UUIDV4)
   @Column({
     type: DataType.STRING,
     allowNull: false,
   })
-  public declare token: string;
+  public declare id: string;
+
+  @Unique
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  public declare sessionToken: string;
 
   @ForeignKey(() => User)
   @Column
@@ -25,6 +37,7 @@ class Token extends Model {
 
   @Column({
     type: DataType.DATE,
+    allowNull: false,
   })
   public declare expiresAt: Date;
 
@@ -32,7 +45,7 @@ class Token extends Model {
   public declare user: User;
 
   @BeforeCreate
-  static setExpirationTime(instance: Token) {
+  static setExpirationTime(instance: Session) {
     // Get the current date and time.
     const currentDate = new Date();
 
@@ -41,4 +54,4 @@ class Token extends Model {
   }
 }
 
-export default Token;
+export default Session;
