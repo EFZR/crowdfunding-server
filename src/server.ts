@@ -3,6 +3,8 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import morgan from "morgan";
+
+// This dependency commonly triggers TypeScript errors because the library doesn't include TypeScript type definitions.
 import "express-async-errors";
 
 // Project dependencies.
