@@ -1,7 +1,7 @@
 @HOSTNAME=localhost
 @PORT=4000
 @CONFIRMATION_TOKEN=540796
-@ACCESS_JWT=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsImVtYWlsIjoiZW1lcnNvbi56YXBhdGFAZ21haWwuY29tIiwiaWF0IjoxNzIyODI4Mjg3LCJleHAiOjE3MzgzODAyODd9.0eF44rPwuoyO5GCUQjPVuIySn9O69BgTBdJ-E2ETcXg
+@ACCESS_JWT=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjliYjlhMWJhLWU3ZjktNDg3My1iMzJhLTE4ZmVjYmJiNWQ3YiIsImVtYWlsIjoiam9obi5kb2VAbWFpbC5jb20iLCJpYXQiOjE3MjMzMjc3NTcsImV4cCI6MTcyMzMyNzgxN30.SFxeFAQWFEyz3WKbGauQFk5EGXOm9aE7BGlJW9CaWQw
 
 POST http://{{HOSTNAME}}:{{PORT}}/api/auth/create-account
 Content-Type: application/json
@@ -73,6 +73,15 @@ Content-Type: application/json
 
 GET http://{{HOSTNAME}}:{{PORT}}/api/auth/user
 Authorization: Bearer {{ACCESS_JWT}}
+
+###
+
+POST http://{{HOSTNAME}}:{{PORT}}/api/auth/refresh-token
+Content-Type: application/json
+
+{
+  "token": "{{ACCESS_JWT}}"
+}
 
 ###
 

@@ -1,5 +1,6 @@
 // Global dependencies.
 import { Request, Response } from "express";
+import jwt from "jsonwebtoken";
 import axios from "axios";
 
 // Project dependencies.
@@ -18,6 +19,14 @@ import User from "../models/User.model";
 import Token from "../models/Token.model";
 import { accountType, providerType } from "../types/Auth";
 import Account from "../models/Account.model";
+import { authValidation } from "../utils/oauth";
+
+/**
+ * FIX:
+ *
+ * Account management when user already exists.
+ *
+ */
 
 export class AuthController {
   static async createAccount(req: Request, res: Response) {
@@ -156,15 +165,15 @@ export class AuthController {
     // Check Hashed password
     const isPasswordValid = await checkPassword(password, user.password);
 
-    // Generate JWT
-    const token = generateJWT({ id: user.id, email: user.email });
-
     if (!isPasswordValid) {
       throw new UnauthorizedError({
         message: "Contraseña Incorrecta.",
         logging: true,
       });
     }
+
+    // Generate JWT
+    const token = generateJWT({ id: user.id, email: user.email });
 
     res.json({ token: token });
   }
@@ -290,6 +299,43 @@ export class AuthController {
     res.json(req.user);
   }
 
+  static async refreshToken(req: Request, res: Response) {
+    // Get Token from body.
+    const {token} = req.body
+
+    // Decode JWT.
+    const decoded = jwt.decode(token);
+    if (typeof decoded === "object" && decoded.id) {
+      const account = await Account.findOne({
+        where: {
+          userId: decoded.id,
+        },
+      });
+
+      if (!account) {
+        throw new UnauthorizedError({
+          message: "Token no Valido.",
+          logging: true,
+        });
+      }
+
+      const isValid = await authValidation[account.provider](account);
+
+      if (!isValid) {
+        throw new UnauthorizedError({
+          message:
+            "Autenticación expirada. Por favor, inicia sesión nuevamente.",
+          logging: true,
+        });
+      }
+
+      // Generate JWT
+      const user = await User.findByPk(account.userId);
+      const token = generateJWT({ id: user.id, email: user.email });
+      res.json({ token: token });
+    }
+  }
+
   static async googleAuthentication(req: Request, res: Response) {
     const params = new URLSearchParams({
       client_id: process.env.GOOGLE_CLIENT_ID,
@@ -390,23 +436,35 @@ export class AuthController {
       });
 
       logger.success("User and account saved.");
+
+      // Respond with a success message
+      res.json({ success: "Cuenta creada, revisa tu email para confirmarla." });
     } else {
       // Update access token of existing user.
       await Account.update(
-        { access_token },
+        {
+          refresh_token,
+          access_token,
+          expires_at,
+          token_type,
+          scope,
+          id_token,
+        },
         {
           where: {
             userId: user.id,
           },
         }
       );
-    }
 
-    // Respond with a success message
-    res.json({ success: "Cuenta creada, revisa tu email para confirmarla." });
+      // Generate JWT
+      const token = generateJWT({ id: user.id, email: user.email });
+
+      res.json({ token: token });
+    }
   }
 
-  // TODO: Implement more oauth 2.0 options like meta and apple id.
+  // TODO: Implement more oauth 2.0 options like facebook
 
   /**
    * TODO: Implement when needed

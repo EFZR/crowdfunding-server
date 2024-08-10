@@ -78,6 +78,8 @@ router.put(
   AuthController.updatePasswordWithToken
 );
 
+router.post("/refresh-token", AuthController.refreshToken);
+
 router.get("/user", authenticate, AuthController.user);
 
 /** Third parties OAuth Authentication */
