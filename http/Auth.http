@@ -1,14 +1,14 @@
 @HOSTNAME=localhost
 @PORT=4000
-@CONFIRMATION_TOKEN=515043
+@CONFIRMATION_TOKEN=540796
 @ACCESS_JWT=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsImVtYWlsIjoiZW1lcnNvbi56YXBhdGFAZ21haWwuY29tIiwiaWF0IjoxNzIyODI4Mjg3LCJleHAiOjE3MzgzODAyODd9.0eF44rPwuoyO5GCUQjPVuIySn9O69BgTBdJ-E2ETcXg
 
 POST http://{{HOSTNAME}}:{{PORT}}/api/auth/create-account
 Content-Type: application/json
 
 {
-  "username": "emerson zapata",
-  "email": "emerson.zapata@gmail.com",
+  "username": "John doe",
+  "email": "john.doe@mail.com",
   "password": "password",
   "password_confirmation": "password"
 }
@@ -28,7 +28,7 @@ POST http://{{HOSTNAME}}:{{PORT}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "emerson.zapata@gmail.com",
+  "email": "john.doe@mail.com",
   "password": "password"
 }
 
@@ -38,7 +38,7 @@ POST http://{{HOSTNAME}}:{{PORT}}/api/auth/request-code
 Content-Type: application/json
 
 {
-  "email": "trevor.maldonado@mail.com"
+  "email": "john.doe@mail.com"
 }
 
 ###
@@ -47,7 +47,7 @@ POST http://{{HOSTNAME}}:{{PORT}}/api/auth/forgot-password
 Content-Type: application/json
 
 {
-  "email": "john.doe@gmail.com"
+  "email": "john.doe@mail.com"
 }
 
 ###
@@ -56,7 +56,7 @@ POST http://{{HOSTNAME}}:{{PORT}}/api/auth/validate-password-token
 Content-Type: application/json
 
 {
-  "token": "{{CONFIRMATION_TOKEN}}"
+  "token": "{{CONFIRMATION_TOKEN}}" 
 }
 
 ###

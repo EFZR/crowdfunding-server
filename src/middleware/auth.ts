@@ -36,6 +36,8 @@ export async function authenticate(
         req.user = user;
         next();
       } else {
+        // TODO: Check for any token if exists and validate to use it.
+        // if not request for a new token.
         throw new UnauthorizedError({
           message: "Token no Valido.",
           logging: true,

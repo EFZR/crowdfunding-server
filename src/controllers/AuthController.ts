@@ -16,6 +16,8 @@ import { generateToken } from "../utils/token";
 import { AuthEmail } from "../emails/AuthEmail";
 import User from "../models/User.model";
 import Token from "../models/Token.model";
+import { accountType, providerType } from "../types/Auth";
+import Account from "../models/Account.model";
 
 export class AuthController {
   static async createAccount(req: Request, res: Response) {
@@ -42,6 +44,16 @@ export class AuthController {
 
     // Create the user in the database
     const newUser = await User.create(userPayload);
+
+    // Create user's account
+    const accountPayload = {
+      provider: providerType.enum.local,
+      providerAccountId: newUser.email,
+      userId: newUser.id,
+      type: accountType.enum.password,
+    };
+
+    await Account.create(accountPayload);
 
     // Generate and save the token
     const tokenPayload = {
@@ -290,15 +302,22 @@ export class AuthController {
     });
     const uri = `${process.env.GOOGLE_AUTH_URI}?${params.toString()}`;
 
+    console.log(uri);
     res.redirect(uri);
   }
 
   static async googleCallback(req: Request, res: Response) {
     const code = req.query.code;
 
-    // TODO: Check for any token if exists and validate to use it.
-    // if not request for a new token.
-    const { data } = await axios.post(process.env.GOOGLE_TOKEN_URI, {
+    if (!code) {
+      throw new BadRequestError({
+        message: "Authorization code is missing",
+        logging: true,
+      });
+    }
+
+    // Request for a new token.
+    const tokenResponse = await axios.post(process.env.GOOGLE_TOKEN_URI, {
       code,
       client_id: process.env.GOOGLE_CLIENT_ID,
       client_secret: process.env.GOOGLE_CLIENT_SECRET,
@@ -306,37 +325,85 @@ export class AuthController {
       grant_type: process.env.GOOGLE_GRANT_TYPE,
     });
 
-    console.log(data);
+    const {
+      access_token,
+      refresh_token,
+      expires_in: expires_at,
+      token_type,
+      scope,
+      id_token,
+    } = tokenResponse.data;
 
-    const { access_token } = data;
-    const { data: userInfo } = await axios.get(
-      process.env.GOOGLE_USER_INFO_URI,
-      {
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-        },
-      }
-    );
+    // Retrieve user info from Google.
+    const userInfoResponse = await axios.get(process.env.GOOGLE_USER_INFO_URI, {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+    });
 
     // Checking in database if user exists.
-    const { email, given_name } = userInfo;
+    const {
+      email,
+      given_name: username,
+      picture: image,
+    } = userInfoResponse.data;
+
     let user = await User.findOne({
       where: {
         email,
       },
     });
 
-    // Saving in database.
     if (!user) {
-      logger.success("User saved.");
-      user = await User.create({
-        email,
-        username: given_name,
+      // Create a new user if not exists.
+      user = await User.create({ email, username, image });
+
+      // Create user's account
+      const accountPayload = {
+        provider: providerType.enum.google,
+        providerAccountId: user.email,
+        userId: user.id,
+        type: accountType.enum.oauth,
+        refresh_token,
+        access_token,
+        expires_at,
+        token_type,
+        scope,
+        id_token,
+      };
+
+      await Account.create(accountPayload);
+
+      // Generate and save the token
+      const tokenPayload = {
+        token: generateToken(),
+        userId: user.id,
+      };
+
+      const token = await Token.create(tokenPayload);
+
+      // Send Email.
+      AuthEmail.sendConfirmationEmail({
+        email: user.email,
+        name: user.username,
+        token: token.token,
       });
+
+      logger.success("User and account saved.");
+    } else {
+      // Update access token of existing user.
+      await Account.update(
+        { access_token },
+        {
+          where: {
+            userId: user.id,
+          },
+        }
+      );
     }
 
-    const token = generateJWT({ id: user.id, email: user.email });
-    res.json({ token: token });
+    // Respond with a success message
+    res.json({ success: "Cuenta creada, revisa tu email para confirmarla." });
   }
 
   // TODO: Implement more oauth 2.0 options like meta and apple id.

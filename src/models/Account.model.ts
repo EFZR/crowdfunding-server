@@ -38,13 +38,13 @@ class Account extends Model {
   public declare type: string;
 
   @Column({
-    type: DataType.STRING,
+    type: DataType.TEXT,
     allowNull: true,
   })
   public declare refresh_token: string | null;
 
   @Column({
-    type: DataType.STRING,
+    type: DataType.TEXT,
     allowNull: true,
   })
   public declare access_token: string | null;
@@ -68,7 +68,7 @@ class Account extends Model {
   public declare scope: string | null;
 
   @Column({
-    type: DataType.STRING,
+    type: DataType.TEXT,
     allowNull: true,
   })
   public declare id_token: string | null;
