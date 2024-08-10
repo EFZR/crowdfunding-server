@@ -301,7 +301,7 @@ export class AuthController {
 
   static async refreshToken(req: Request, res: Response) {
     // Get Token from body.
-    const {token} = req.body
+    const { token } = req.body;
 
     // Decode JWT.
     const decoded = jwt.decode(token);
@@ -400,6 +400,7 @@ export class AuthController {
       },
     });
 
+    // Create User if don't exists.
     if (!user) {
       // Create a new user if not exists.
       user = await User.create({ email, username, image });
@@ -439,7 +440,10 @@ export class AuthController {
 
       // Respond with a success message
       res.json({ success: "Cuenta creada, revisa tu email para confirmarla." });
-    } else {
+    }
+
+    // Update and login user if exists.
+    else {
       // Update access token of existing user.
       await Account.update(
         {

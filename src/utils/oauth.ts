@@ -1,5 +1,7 @@
 import axios from "axios";
+
 import Account from "../models/Account.model";
+import { logger } from "./logging";
 import { ProviderType } from "../types/Auth";
 
 // Shape of a validation function
@@ -11,8 +13,8 @@ type AuthValidation = {
 
 // Validation logic for Google
 const validateGoogleAuth: ValidationFunction = async (account: Account) => {
-  // Add real Google validation logic here
   try {
+    // Request for a new access token.
     const tokenResponse = await axios.post(process.env.GOOGLE_TOKEN_URI, {
       client_id: process.env.GOOGLE_CLIENT_ID,
       client_secret: process.env.GOOGLE_CLIENT_SECRET,
@@ -23,21 +25,21 @@ const validateGoogleAuth: ValidationFunction = async (account: Account) => {
 
     const {
       access_token,
-      refresh_token,
       expires_in: expires_at,
       token_type,
       scope,
       id_token,
     } = tokenResponse.data;
 
+    // Update old data
     await Account.update(
-      { refresh_token, access_token, expires_at, token_type, scope, id_token },
+      { access_token, expires_at, token_type, scope, id_token },
       { where: { userId: account.userId } }
     );
 
     return true;
   } catch (error) {
-    console.log(error);
+    logger.critical("Error refreshing Google token.");
     return false;
   }
 };
