@@ -24,7 +24,8 @@ import { authValidation } from "../utils/oauth";
 /**
  * FIX:
  *
- * Account management when user already exists.
+ * - Account management when user already exists.
+ * - Check Expire time of token.
  *
  */
 
@@ -346,9 +347,9 @@ export class AuthController {
       state: process.env.GOOGLE_STATE,
       access_type: process.env.GOOGLE_ACCESS_TYPE,
     });
+
     const uri = `${process.env.GOOGLE_AUTH_URI}?${params.toString()}`;
 
-    console.log(uri);
     res.redirect(uri);
   }
 
@@ -402,7 +403,6 @@ export class AuthController {
 
     // Create User if don't exists.
     if (!user) {
-      // Create a new user if not exists.
       user = await User.create({ email, username, image });
 
       // Create user's account
@@ -429,7 +429,7 @@ export class AuthController {
 
       const token = await Token.create(tokenPayload);
 
-      // Send Email.
+      // Send confirmation email.
       AuthEmail.sendConfirmationEmail({
         email: user.email,
         name: user.username,
@@ -438,13 +438,17 @@ export class AuthController {
 
       logger.success("User and account saved.");
 
-      // Respond with a success message
-      res.json({ success: "Cuenta creada, revisa tu email para confirmarla." });
+      // Redirect with success message
+      const message = "Cuenta creada, revisa tu email para confirmarla.";
+      res.redirect(
+        `${
+          process.env.FRONTEND_URL
+        }/authentication/login?message=${encodeURIComponent(message)}`
+      );
     }
 
-    // Update and login user if exists.
+    // Update existing user's account
     else {
-      // Update access token of existing user.
       await Account.update(
         {
           refresh_token,
@@ -461,10 +465,10 @@ export class AuthController {
         }
       );
 
-      // Generate JWT
+      // Generate JWT and set Cookie.
       const token = generateJWT({ id: user.id, email: user.email });
-
-      res.json({ token: token });
+      res.cookie("token", token, { httpOnly: true });
+      res.redirect(`${process.env.FRONTEND_URL}/`);
     }
   }
 
